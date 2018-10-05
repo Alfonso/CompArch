@@ -24,7 +24,7 @@ int main(int argc, char ** argv){
     fp = fopen(argv[1],"r");
     if(fp == NULL){
 
-        printf("Please input a proper file name!\n");
+        printf("error");
         return 0;
 
     }
@@ -45,8 +45,9 @@ int main(int argc, char ** argv){
     evenOdd(points,num);
  
     for(counter = 0; counter < num; counter++){
-
-        printf("%d\t",points[counter]);
+        if(counter < num-1)
+            printf("%d\t",points[counter]);
+        else printf("%d",points[counter]);
 
     }
     printf("\n");

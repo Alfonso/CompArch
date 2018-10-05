@@ -30,7 +30,7 @@ int main(int argc,char** argv){
     FILE* fp;
     fp = fopen(argv[1],"r");
     if(fp == NULL){
-        printf("error\n");
+        printf("error");
         return 0;
     }
     // char of what we are doing: inserting or searching
