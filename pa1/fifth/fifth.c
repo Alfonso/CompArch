@@ -15,7 +15,7 @@ int main(int argc,char** argv){
     FILE* fp;
     fp = fopen(argv[1],"r");
     if(fp == NULL){
-        printf("Please input a correct file name\n");
+        printf("error\n");
         return 0;
     }
     

@@ -28,7 +28,7 @@ int main(int argc, char** argv){
     FILE* fp;
     fp = fopen(argv[1],"r");
     if(fp == NULL){
-        printf("Please input a proper file name!\n");
+        printf("error\n");
         return 0;
     }
     
@@ -216,7 +216,9 @@ void traverse(listNode* head){
     printf("%d\n",counter);
     ptr = head;
     while(ptr != NULL){
-        printf("%d\t",ptr->data);
+        if(ptr->next != NULL)
+            printf("%d\t",ptr->data);
+        else printf("%d",ptr->data);
         ptr = ptr->next;
     }
     printf("\n");

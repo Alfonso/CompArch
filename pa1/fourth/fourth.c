@@ -106,7 +106,9 @@ void printMatrix(int** matrix,int row,int col){
     int x,y;
     for(x = 0;x<row;x++){
         for(y=0;y<col;y++){
-            printf("%d\t",matrix[x][y]);
+            if(y != col-1)
+                printf("%d\t",matrix[x][y]);
+            else printf("%d",matrix[x][y]);
         }
         printf("\n");
     }
