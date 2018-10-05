@@ -42,7 +42,7 @@ int main(int argc,char** argv){
     FILE* fp;
     fp = fopen(argv[1],"r");
     if(fp == NULL){
-        printf("Please input a proper file name!\n");
+        printf("error\n");
         return 0;
     }
     
@@ -55,10 +55,10 @@ int main(int argc,char** argv){
     while( fscanf(fp,"%c %d",&request,&iValue) != EOF ){
         if(request == 'i'){
             // inserting the value
-            hash(iValue % size,iValue);
+            hash(abs(iValue % size),iValue);
         }else if(request == 's'){
                 // searching for value
-                search(iValue % size,iValue);
+                search(abs(iValue % size),iValue);
             }
     }
     if(feof(fp)){
@@ -104,7 +104,7 @@ void hash(int key,int value){
             // add the node
             ptr->next = temp;
             nodeCounter+=1;
-            printf("inserted:");
+            printf("inserted\n");
             lf = nodeCounter / size;
             if(lf > 0.75)
                 rehash();

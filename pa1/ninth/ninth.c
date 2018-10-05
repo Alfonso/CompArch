@@ -81,7 +81,7 @@ int main(int argc,char** argv){
                         // is not in the list
                         exist = 0;
                     }else exist = 1;
-                    deleteNode(root,iValue);
+                    root = deleteNode(root,iValue);
                     temp = searchTree(root,iValue);
     
                     if( temp == NULL ){

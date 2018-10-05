@@ -16,7 +16,7 @@ int main(int argc,char** argv){
     FILE* fp;
     fp = fopen(argv[1],"r");
     if(fp == NULL){
-        printf("Please input a correct file name!\n");
+        printf("error\n");
         return 0;
     }
 
@@ -68,7 +68,7 @@ int main(int argc,char** argv){
     }
     // check to see if we can even do matrix multiplication
     if(numCol1 != numRow2){
-        printf("bad-matrix\n");
+        printf("bad-matrices\n");
         return 0;
     }
     
