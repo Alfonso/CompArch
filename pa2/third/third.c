@@ -3,6 +3,13 @@
 
 // treat 0 and 1 as false and true respectively
 
+// the input board may not be valid so check
+// if it is valid, if not, quit
+// return 0 if it is not valid
+// return 1 if it is valid
+int isValid(int**);
+
+
 // prints the given board
 void printBoard(int**);
 
@@ -71,6 +78,14 @@ int main(int argc,char** argv){
         }
     }
 
+    // check if the board is vaid before solving it
+    if( isValid(board) == 0 ){
+        // board is not valid
+        printf("no-solution");
+        return 0;
+    }
+
+
     // actually solve the board
     if( backtrackSolve(board) == 1 ){
         // it was a success!
@@ -126,6 +141,31 @@ int backtrackSolve(int** board){
     }
     
     return 0;
+}
+
+// return 0 if not valid
+// return 1 if valid
+int isValid(int** board){
+
+    int counter,counter2;
+
+    for(counter=0;counter<9;counter++){
+        for(counter2=0;counter2<9;counter2++){
+            int temp=board[counter][counter2];
+            // if there is a number in this spot
+            // check if there are repeating values in the row,col or section
+            if( temp !=0 ){
+                // there exists a value in this spot
+                if( (checkCol(board,counter2,temp) == 1) || (checkRow(board,counter,temp)==1) || (checkSection(board,sectionFinder(counter,counter2),temp) == 1) ){
+                    // the number matches another one that is in the row, col, or section
+                    // the board is not solvable/valid
+                    return 0;
+                }
+            }
+        }
+    }
+
+    return 1;
 }
 
 // returns 0 if there is no empty spot
