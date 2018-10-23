@@ -156,11 +156,15 @@ int isValid(int** board){
             // check if there are repeating values in the row,col or section
             if( temp !=0 ){
                 // there exists a value in this spot
+                // SO set it equal to 0 so the functions work
+                board[counter][counter2] = 0;
                 if( (checkCol(board,counter2,temp) == 1) || (checkRow(board,counter,temp)==1) || (checkSection(board,sectionFinder(counter,counter2),temp) == 1) ){
                     // the number matches another one that is in the row, col, or section
                     // the board is not solvable/valid
                     return 0;
                 }
+                // there does not exist a matching number so set it back
+                board[counter][counter2] = temp;
             }
         }
     }
