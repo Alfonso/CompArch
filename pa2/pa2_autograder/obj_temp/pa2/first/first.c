@@ -17,10 +17,6 @@ void printVector(double*,int);
 
 double* computeWeights(double**,double*,int,int);
 
-double** changePivot(double**,int,int,int,int);
-
-int findPivot(double*,int);
-
 int main(int argc,char** argv){
     
     // check the argument values and check if there is the correct amount
@@ -81,6 +77,7 @@ int main(int argc,char** argv){
     
     w = computeWeights(x,y,numRows,numCols);
     
+
     printMatrix(x,numRows,numCols);
     printf("\n");
     printVector(y,numRows);
@@ -101,6 +98,7 @@ double* multiplyVector(double** matrix,double* vector,int rowCount1,int rowCount
             total+= matrix[counter][counter2]*vector[counter2];        
         }
         result[counter] = total;
+        total = 0;
     }
 
 
@@ -111,47 +109,11 @@ double* computeWeights(double** x,double* y, int rowCount,int colCount){
     // W = (X^T * X)^-1 * (X^T) *Y
     // where W is the matrix that contains the values of the weights
 
-    int counter;
-
+    double* result = (double*)malloc(rowCount*sizeof(double));
     // result is going to store the values of the weights
-    double* result = (double*)malloc(colCount*sizeof(double));
-    
-    double** m1 = (double**)malloc(colCount*sizeof(double*));
-    double** m2 = (double**)malloc(colCount*sizeof(double*));
-    double** xT = (double**)malloc(colCount*sizeof(double*));
-    double** m0 = (double**)malloc(colCount*sizeof(double*));
-    for(counter=0;counter<colCount;counter++){
-        xT[counter] = (double*)malloc(rowCount*sizeof(double));
-        m1[counter] = (double*)malloc(colCount*sizeof(double));
-        m2[counter] = (double*)malloc(rowCount*sizeof(double));
-        m0[counter] = (double*)malloc(colCount*sizeof(double));
-    }    
-
-
-    xT = computeTranspose(x,rowCount,colCount);
-    
-    m0 = multiplyMatrix(xT,x,colCount,rowCount,rowCount,colCount);   
- 
-    m1 = computeInverse( m0,colCount,colCount );
     
     
-    m2 = multiplyMatrix(m1,xT,colCount,colCount,colCount,rowCount);
-    
-
-    result = multiplyVector(m2,y,colCount,rowCount,rowCount  );
-    
-    printf("x: \n");
-    printMatrix(x,rowCount,colCount);
-    printf("y: \n");
-    printVector(y,colCount);
-    printf("xT: \n");
-    printMatrix(xT,colCount,rowCount);
-    printf("m1: \n");
-    printMatrix(m1,colCount,colCount);
-    printf("m2: \n");
-    printMatrix(m2,colCount,rowCount);
-    printf("result: \n");
-    printVector(result,colCount);
+    result = multiplyVector( multiplyMatrix(computeInverse(multiplyMatrix(computeTranspose(x,rowCount,colCount),x,rowCount,rowCount,colCount,colCount),rowCount,colCount),computeTranspose(x,rowCount,colCount),rowCount,rowCount,colCount,colCount),y,rowCount,rowCount,colCount );
 
     return result;
 
@@ -208,15 +170,13 @@ double** multiplyMatrix(double** matrix1, double** matrix2,int rowCount1,int row
 
 double** computeInverse(double** matrix,int rowCount,int colCount){
     double** iMatrix = (double**)malloc(rowCount*sizeof(double*));
-    double** augMatrix = (double**)malloc(rowCount*sizeof(double*));
+    double** augMatrix = (double**)malloc(rowCount*sizeof(double));
     int x,y;
     int newColCount = rowCount+colCount;
 
-
-
     // intialize the rows and make each the length of the original column count + amount of rows
     for(x=0;x<rowCount;x++)
-        augMatrix[x] = (double*)malloc((newColCount)*sizeof(double));
+        augMatrix[x] = (double*)malloc((rowCount+colCount)*sizeof(double));
 
     // copy the original data over to the augmented matrix
     for(x=0;x<rowCount;x++){
@@ -224,8 +184,6 @@ double** computeInverse(double** matrix,int rowCount,int colCount){
             augMatrix[x][y] = matrix[x][y];
         }
     }
-
-
 
     // make the last indexes the identity matrix
     for(x=0;x<rowCount;x++){
@@ -235,66 +193,22 @@ double** computeInverse(double** matrix,int rowCount,int colCount){
             }else augMatrix[x][y] = 0;
         }
     }
-   
-
+    
     // do the actual row operations
     for(x=0;x<rowCount;x++){
         // loop through all of the rows and make sure that they are put into RREF
-        augMatrix = changePivot(augMatrix,x,findPivot(augMatrix[x],newColCount),rowCount,newColCount);
-    } 
-
-    
-    // initialize iMatrix
-    for(x=0;x<rowCount;x++){
-        iMatrix[x] = (double*)malloc(rowCount*sizeof(double));
-    }
-
-    // set iMatrix equal to just the inverse part of the matrix
-    for(x=0;x<rowCount;x++){
-        for(y=colCount;y<newColCount;y++){
-            iMatrix[x][y-colCount] = augMatrix[x][y];
+        for(y=0;y<newColCount;y++){
+            // loop through all of the cols and do the row operation
+            if(y==0){
+                // first time looping through this row. Change the pivot to 1
+                
+            }
         }
-    }
-
+    } 
+    iMatrix = matrix; // this isjust a placeholder while
+                      // im waiting to code the actual row operations
 
     return iMatrix;
-}
-
-// turn the pivot to a 1 and change the values above and below equal to zeros
-double** changePivot(double** matrix,int row,int pivotCol,int rowCount,int colCount){
-    int counter,counter2;
-    // change the pivot to 1 and do the operation on the rest  of the row
-    for(counter=pivotCol;counter<colCount;counter++){
-        matrix[row][counter] = matrix[row][counter] / matrix[row][pivotCol];
-    }
-
-    // change all of the values above the pivot to 0
-    for(counter=0;counter<row;counter++){
-        for(counter2=pivotCol;counter2<colCount;counter2++){
-            matrix[counter][counter2] = matrix[counter][counter2] - (matrix[counter][counter2] * matrix[counter][pivotCol]);
-        }
-    }
-
-    // change all of the values below the pivot to 0
-    for(counter=row+1;counter<rowCount;counter++){
-        for(counter2=pivotCol;counter2<colCount;counter2++){
-            matrix[counter][counter2] = matrix[counter][counter2] - (matrix[counter][counter2] * matrix[counter][pivotCol]);
-        }
-    }
-
-    return matrix;
-}
-
-// returns the pivot col of the given row
-int findPivot(double* row,int colCount){
-    int counter;
-    for(counter=0;counter<colCount;counter++){
-        if( row[counter] != 0 )
-            return counter;
-    }
-
-    // there is no pivot col????
-    return -1;
 }
 
 void printVector(double* vector,int row){
