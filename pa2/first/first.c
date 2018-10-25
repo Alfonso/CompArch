@@ -21,6 +21,8 @@ double** changePivot(double**,int,int,int,int);
 
 int findPivot(double*,int);
 
+void freeMatrix(double**,int);
+
 int main(int argc,char** argv){
     
     // check the argument values and check if there is the correct amount
@@ -77,16 +79,37 @@ int main(int argc,char** argv){
     // W = (X^T * X)^-1 * (X^T) *Y
     // where W is the matrix that contains the values of the weights
 
-    double* w = (double*)malloc(numRows*sizeof(double));
+    double* w = (double*)malloc(numCols*sizeof(double));
     
     w = computeWeights(x,y,numRows,numCols);
     
-    printMatrix(x,numRows,numCols);
-    printf("\n");
-    printVector(y,numRows);
-    printf("\n");
-    printVector(w,numRows);
+    // use the calculated weights to find the predicted values
+    // we subtract 1 because the 1 was to account for the columns of 1
+    int attributeCount = numCols - 1;
+    int numTRows;
 
+    FILE* fpTest;
+    fpTest = fopen(argv[2],"r");
+    if(fpTest == NULL){
+        printf("error");
+        return 0;
+    }
+    
+    // read in the test data
+    fscanf(fpTest,"%d\n",&numTRows);
+    printf("Num T Rows: %d\n",numTRows);
+    
+    double** test = (double**)malloc(sizeof(double*)*numTRows);
+    for(counter=0;counter<numTRows;counter++){
+        test[counter] = (double*)malloc(sizeof(double)*attributeCount);
+    }
+
+    // put all of the test data into a matrix;
+    
+    // free all of the matrices and data
+    
+    fclose(fpTest);
+    fclose(fp);
     return 0;
 }
 
@@ -94,7 +117,7 @@ double* multiplyVector(double** matrix,double* vector,int rowCount1,int rowCount
     double* result = (double*)malloc(rowCount1*sizeof(double));
     int counter = 0;
     int counter2 = 0;    
-    int total = 0;
+    double total = 0;
     
     for(counter=0;counter<rowCount1;counter++){
         for(counter2=0;counter2<colCount;counter2++){
@@ -146,6 +169,8 @@ double* computeWeights(double** x,double* y, int rowCount,int colCount){
     printVector(y,colCount);
     printf("xT: \n");
     printMatrix(xT,colCount,rowCount);
+    printf("m0: \n");
+    printMatrix(m0,colCount,colCount);
     printf("m1: \n");
     printMatrix(m1,colCount,colCount);
     printf("m2: \n");
@@ -153,8 +178,24 @@ double* computeWeights(double** x,double* y, int rowCount,int colCount){
     printf("result: \n");
     printVector(result,colCount);
 
+    // free all of the matrices that we do not need anymore
+    freeMatrix(m1,colCount);
+    freeMatrix(m2,colCount);
+    freeMatrix(xT,colCount);
+    freeMatrix(m0,colCount);
+
     return result;
 
+}
+
+void freeMatrix(double** matrix,int rowCount){
+    int counter;
+    for(counter=0;counter<rowCount;counter++){
+        free(matrix[counter]);
+    }
+
+    free(matrix);
+    return;
 }
 
 double** computeTranspose(double** matrix,int rowCount,int numCount){
@@ -235,12 +276,14 @@ double** computeInverse(double** matrix,int rowCount,int colCount){
             }else augMatrix[x][y] = 0;
         }
     }
-   
-
+ 
+ 
+    int pivot; 
     // do the actual row operations
     for(x=0;x<rowCount;x++){
         // loop through all of the rows and make sure that they are put into RREF
-        augMatrix = changePivot(augMatrix,x,findPivot(augMatrix[x],newColCount),rowCount,newColCount);
+        pivot = findPivot(augMatrix[x],newColCount);
+        augMatrix = changePivot(augMatrix,x,pivot,rowCount,newColCount);
     } 
 
     
@@ -263,22 +306,29 @@ double** computeInverse(double** matrix,int rowCount,int colCount){
 // turn the pivot to a 1 and change the values above and below equal to zeros
 double** changePivot(double** matrix,int row,int pivotCol,int rowCount,int colCount){
     int counter,counter2;
+    double value;
+
     // change the pivot to 1 and do the operation on the rest  of the row
+    value = matrix[row][pivotCol];
     for(counter=pivotCol;counter<colCount;counter++){
-        matrix[row][counter] = matrix[row][counter] / matrix[row][pivotCol];
+        matrix[row][counter] = matrix[row][counter] / value;
     }
 
     // change all of the values above the pivot to 0
     for(counter=0;counter<row;counter++){
+        value = matrix[counter][pivotCol];
         for(counter2=pivotCol;counter2<colCount;counter2++){
-            matrix[counter][counter2] = matrix[counter][counter2] - (matrix[counter][counter2] * matrix[counter][pivotCol]);
+            if( value != 0)
+                matrix[counter][counter2] = matrix[counter][counter2] - (value * matrix[row][counter2]);
         }
     }
 
     // change all of the values below the pivot to 0
     for(counter=row+1;counter<rowCount;counter++){
+        value = matrix[counter][pivotCol];
         for(counter2=pivotCol;counter2<colCount;counter2++){
-            matrix[counter][counter2] = matrix[counter][counter2] - (matrix[counter][counter2] * matrix[counter][pivotCol]);
+            if( value != 0)
+                matrix[counter][counter2] = matrix[counter][counter2] - (value * matrix[row][counter2]);
         }
     }
 
@@ -343,7 +393,7 @@ double** makeIdentity(int rowCount,int colCount,int value){
 
 double multiplyRowCol(double* row,double** col,int size,int colNum){
     int counter;
-    int total = 0;
+    double total = 0;
     for(counter = 0;counter<size;counter++){
         total += row[counter] * col[counter][colNum];
     }
