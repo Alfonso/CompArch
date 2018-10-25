@@ -3,18 +3,24 @@
 
 // treat 0 and 1 as false and true respectively
 
+// Need to differentiate this program from program 3 as program 3
+// can solve some boards that this program cannot.
+// how it will work is go section by section and try to figure out
+// which numbers are missing. It will then check if any of them are
+// valid in the
+
 // the input board may not be valid so check
 // if it is valid, if not, quit
 // return 0 if it is not valid
 // return 1 if it is valid
 int isValid(int**);
 
+// checks the if at the given cell,
+// there can be exactly 1 number that fits
+int onlyOne(int**,int,int);
 
 // prints the given board
 void printBoard(int**);
-
-// recursively solve the board using backtracking
-int backtrackSolve(int**);
 
 // give a row and col and figure out what 3x3
 // section it is in
@@ -37,9 +43,7 @@ int checkRow(int**,int,int);
 
 // returns 0 if there is not an empty spot
 // returns 1 if there is an empty spot
-// sets the value of row and col
-// to the position of the empty location
-int hasEmpty(int**,int*,int*);
+int hasEmpty(int**);
 
 int main(int argc,char** argv){
 
@@ -85,62 +89,58 @@ int main(int argc,char** argv){
         return 0;
     }
 
+    int cellCounter = 0;
 
     // actually solve the board
-    if( backtrackSolve(board) == 1 ){
-        // it was a success!
-        // print out the solved board
-        printBoard(board);
-    }else{
-        printf("no-solution");
+    while( hasEmpty(board) == 1 && cellCounter<81 ){
+        // loop while there is an empty spot on the board
+        for(counter=0;counter<9;counter++){
+            for(counter2=0;counter2<9;counter2++){
+                // check if the current cell has a value
+                // if it does, then set it
+                if( board[counter][counter2] == 0 ){
+                    if( onlyOne(board,counter,counter2) == 0 ){
+                        // more than one value exists so just skip this?
+                    }else{
+                        board[counter][counter2] = onlyOne(board,counter,counter2);
+                    }
+                }
+            }
+        }
+        cellCounter++;
+
     }
 
+    if( hasEmpty(board) == 1){
+        // board still has an empty spot
+        printf("no-solution");
+        return 0;
+    }else printBoard(board);
 
-    
     return 0;
 }
 
-// solve the board using backtracking
-// brute force the board
-// return 0 if fail
-// return 1 if success
-int backtrackSolve(int** board){
-    int counter,row,col;
-    row = 0;
-    col = 0;
+// checks if multiple values can exist
+// in the provided cell.
+// returns 0 if more than one value exists
+// returns the number if only 1 exists
+int onlyOne(int** board,int row,int col){
+    int counter;
+    int numOfValid = 0;
+    int value=0;
+    int section = sectionFinder(row,col);    
 
-    // if there are no more empty spots
-    // SUCCESS!!!
-    // pass it the adderss of row and col
-    // so hasEmpty can change these values
-    // to the spot that is empty if there is one
-    if( hasEmpty(board,&row,&col) == 0 ){
-        return 1;
-    }
-
-    // check to see if the board is valid
-    // when adding these numbers 1-9
     for(counter=1;counter<10;counter++){
-        if( (checkCol(board,col,counter) == 0) && (checkRow(board,row,counter) == 0) && (checkSection(board,sectionFinder(row,col),counter) == 0) ){
-            // the value of counter is not found in the row, col, and section
-            
-            board[row][col] = counter;
-            
-            // call backtrack again
-            // if it is true true than that means our guess
-            // was right
-            if( backtrackSolve(board) == 1 ){
-                return 1;
+        if( (checkRow(board,row,counter) == 0) && (checkCol(board,col,counter) == 0) && (checkSection(board,section,counter) == 0) ){
+            numOfValid++;
+            value = counter;
+            if( numOfValid > 1){
+                return 0;
             }
-
-            // this means that the value assigned was incorrect.
-            // reassign it to 0 and try again
-            board[row][col] = 0;
-
         }
-    }
-    
-    return 0;
+    }    
+
+    return value;
 }
 
 // return 0 if not valid
@@ -174,13 +174,12 @@ int isValid(int** board){
 
 // returns 0 if there is no empty spot
 // returns 1 if there is an empty spot
-// saves the location of the row and col
 // that has the empty location
-int hasEmpty(int** board,int* row,int* col){
-
-    for((*row)=0;(*row)<9;(*row)+=1){
-        for((*col)=0;(*col)<9;(*col)+=1){
-            if( board[(*row)][(*col)] == 0 ){
+int hasEmpty(int** board){
+    int row,col;
+    for(row=0;row<9;row+=1){
+        for(col=0;col<9;col+=1){
+            if( board[row][col] == 0 ){
                 return 1;
             }
         }

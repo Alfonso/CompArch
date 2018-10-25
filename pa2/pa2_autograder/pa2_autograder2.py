@@ -73,6 +73,74 @@ def run_command(command_string, input_string="", max_lines=0, timeout=120, verbo
     else:
         return output
 
+def grade_sudoku_problem(ref_file, test_string, show_difference=False) :
+    #ref_file is the file that has the solution
+    #test_string is the output of the program that we are testing.
+    test_string = test_string.strip()
+
+    answer = ""
+    with open(ref_file, 'r') as content_file:
+        answer = content_file.read()
+    answer = answer.strip()
+
+    # Detect if it's correct.
+    # Answer says no-solution and test says no-solution
+    if compare_string("no-solution", answer) and compare_string("no-solution", test_string) :
+        return True
+    # Answer says no-solution but test does not say no-solution
+    elif compare_string("no-solution", answer) and not compare_string("no-solution", test_string) :
+        print "Observed:"
+        print test_string
+        print "Expected:"
+        print answer
+        return False
+    # Answer says not no-solution but test says no-solution
+    elif not compare_string("no-solution", answer) and compare_string("no-solution", test_string) :
+        print "Observed:"
+        print test_string
+        print "Expected:"
+        print answer
+        return False
+    # Answer says not no-solution and test says not no-solution
+    else :
+        answer_board = [l.strip().split() for l in answer.split("\n")]
+        test_board = [l.strip().split() for l in test_string.split("\n")]
+
+        # 1. Make sure test_board is a 9x9 grid
+        if len(test_board) != 9 :
+            print "Expected 9 rows. Observed %d rows." % (len(test_board))
+            return False
+        for i in range(0, 9) :
+            if len(test_board[i]) != 9 :
+                print "Expected 9 columns. Observed %d columns in row %d" % (len(test_board[i]), i+1)
+                return False
+
+        # 2. Now that we know test_board is correct, make sure the numbers are the same
+        answer_is_correct = True
+        for i in range(0, 9) :
+            for j in range(0, 9) :
+                if answer_board[i][j] == test_board[i][j] :
+                    test_board[i][j] = ""
+                else :
+                    answer_is_correct = False
+
+        if answer_is_correct :
+            return True
+        else :
+            print "Cells containing wrong values: "
+            for i in range(0, 9) :
+                line_string = ""
+                for j in range(0, 9) :
+                    if test_board[i][j] == "" :
+                        line_string = line_string + "_"
+                    else :
+                        line_string = line_string + test_board[i][j]
+                    line_string = line_string + "\t"
+                print line_string
+            return False
+
+        
+
 def compare_string_file(ref_file, test_string, show_difference=False):
     test_list=test_string.split("\n")
     fd = open(ref_file)
@@ -227,7 +295,7 @@ def second_grade(dirname):
             final_release_scores['second'] = score
             return
 
-        if compare_string_file(resultfile, ret, show_difference=True):
+        if grade_sudoku_problem(resultfile, ret, show_difference=True):
             print "The output is correct for input file %s."%(testfile)
 	    score = score + 6.25
         else:
@@ -278,7 +346,7 @@ def third_grade(dirname):
             final_release_scores['third'] = score
             return
 
-        if compare_string_file(resultfile, ret, show_difference=True):
+        if grade_sudoku_problem(resultfile, ret, show_difference=True):
             print "The output is correct for input file %s."%(testfile)
 	    score = score + 6.25
         else:
