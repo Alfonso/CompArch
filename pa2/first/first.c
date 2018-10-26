@@ -89,7 +89,8 @@ int main(int argc,char** argv){
     
     // use the calculated weights to find the predicted values
     // we subtract 1 because the 1 was to account for the columns of 1
-    int attributeCount = numCols - 1;
+    // but apparently we have to add 1's to this matrix as well?
+    int attributeCount = numCols;
     int numTRows;
 
     FILE* fpTest;
@@ -110,12 +111,14 @@ int main(int argc,char** argv){
     // put all of the test data into a matrix;
     for(counter=0;counter<numTRows;counter++){
         for(counter2=0;counter2<attributeCount;counter2++){
-            if( counter2<attributeCount  ){
-                fscanf(fpTest,"%lf,",&test[counter][counter2]);
-            }else if( counter2 == attributeCount  ){
-                // we are at the last col
-                fscanf(fpTest,"%lf",&test[counter][counter2]);
-            }
+            if(counter2 == 0){
+                test[counter][counter2] = 1;
+            }else if( counter2<attributeCount  ){
+                    fscanf(fpTest,"%lf,",&test[counter][counter2]);
+                }else if( counter2 == attributeCount  ){
+                    // we are at the last col
+                    fscanf(fpTest,"%lf",&test[counter][counter2]);
+                }
         }
     }   
  
@@ -128,7 +131,7 @@ int main(int argc,char** argv){
     
     double* final = multiplyVector(test,w,numTRows,numCols,attributeCount);
     
-    printf("\n");
+    //printf("\n");
     printVectorValues(final,numTRows);
 
     // free all of the matrices and data
@@ -205,21 +208,21 @@ double* computeWeights(double** x,double* y, int rowCount,int colCount){
 
     result = multiplyVector(m2,y,colCount,rowCount,rowCount  );
     
-    printf(" (X^T * X)^-1 * (x^T) * Y\n");
-    printf("x: \n");
-    printMatrix(x,rowCount,colCount);
-    printf("\ny: \n");
-    printVector(y,rowCount);
-    printf("\nxT: \n");
-    printMatrix(xT,colCount,rowCount);
-    printf("\nm0 (xT * x): \n");
-    printMatrix(m0,colCount,colCount);
-    printf("\nm1 (m0 ^ -1): \n");
-    printMatrix(m1,colCount,colCount);
-    printf("\nm2 (m1*xT): \n");
-    printMatrix(m2,colCount,rowCount);
-    printf("\nresult (m2*y): \n");
-    printVector(result,colCount);
+    //printf(" (X^T * X)^-1 * (x^T) * Y\n");
+    //printf("x: \n");
+    //printMatrix(x,rowCount,colCount);
+    //printf("\ny: \n");
+    //printVector(y,rowCount);
+    //printf("\nxT: \n");
+    //printMatrix(xT,colCount,rowCount);
+    //printf("\nm0 (xT * x): \n");
+    //printMatrix(m0,colCount,colCount);
+    //printf("\nm1 (m0 ^ -1): \n");
+    //printMatrix(m1,colCount,colCount);
+    //printf("\nm2 (m1*xT): \n");
+    //printMatrix(m2,colCount,rowCount);
+    //printf("result (m2*y): \n");
+    //printVector(result,colCount);
 
     // free all of the matrices that we do not need anymore
     freeMatrix(m1,colCount);
