@@ -9,6 +9,8 @@ double** computeTranspose(double**,int,int);
 
 double** multiplyMatrix(double**,double**,int,int,int,int);
 
+double* multiplyVector(double**,double*,int,int,int);
+
 void printMatrix(double**,int,int);
 
 double multiplyRowCol(double*,double**,int,int);
@@ -22,6 +24,8 @@ double** changePivot(double**,int,int,int,int);
 int findPivot(double*,int);
 
 void freeMatrix(double**,int);
+
+void printVectorValues(double*,int);
 
 int main(int argc,char** argv){
     
@@ -97,7 +101,6 @@ int main(int argc,char** argv){
     
     // read in the test data
     fscanf(fpTest,"%d\n",&numTRows);
-    printf("Num T Rows: %d\n",numTRows);
     
     double** test = (double**)malloc(sizeof(double*)*numTRows);
     for(counter=0;counter<numTRows;counter++){
@@ -105,12 +108,50 @@ int main(int argc,char** argv){
     }
 
     // put all of the test data into a matrix;
+    for(counter=0;counter<numTRows;counter++){
+        for(counter2=0;counter2<attributeCount;counter2++){
+            if( counter2<attributeCount  ){
+                fscanf(fpTest,"%lf,",&test[counter][counter2]);
+            }else if( counter2 == attributeCount  ){
+                // we are at the last col
+                fscanf(fpTest,"%lf",&test[counter][counter2]);
+            }
+        }
+    }   
+ 
+
+    // using the new matrix and the calculated weights
+    // find out the potential information
+    // X.W = Y
+    // Where x is the test value matrix, w is the
+    // weights and y is the final values computed
     
+    double* final = multiplyVector(test,w,numTRows,numCols,attributeCount);
+    
+    printf("\n");
+    printVectorValues(final,numTRows);
+
     // free all of the matrices and data
-    
+    free(final);
+    free(y);
+    freeMatrix(x,numRows);
+    freeMatrix(test,numTRows);
+    free(w);
+
     fclose(fpTest);
     fclose(fp);
     return 0;
+}
+
+// print out the vector but with rounding
+void printVectorValues(double* vector,int rowCount){
+    int counter;
+    for(counter = 0;counter<rowCount;counter++){
+        printf("%0.0lf\n",vector[counter]);
+    }
+    
+
+    return;
 }
 
 double* multiplyVector(double** matrix,double* vector,int rowCount1,int rowCount2,int colCount){
@@ -124,6 +165,7 @@ double* multiplyVector(double** matrix,double* vector,int rowCount1,int rowCount
             total+= matrix[counter][counter2]*vector[counter2];        
         }
         result[counter] = total;
+        total =0;
     }
 
 
@@ -163,19 +205,20 @@ double* computeWeights(double** x,double* y, int rowCount,int colCount){
 
     result = multiplyVector(m2,y,colCount,rowCount,rowCount  );
     
+    printf(" (X^T * X)^-1 * (x^T) * Y\n");
     printf("x: \n");
     printMatrix(x,rowCount,colCount);
-    printf("y: \n");
-    printVector(y,colCount);
-    printf("xT: \n");
+    printf("\ny: \n");
+    printVector(y,rowCount);
+    printf("\nxT: \n");
     printMatrix(xT,colCount,rowCount);
-    printf("m0: \n");
+    printf("\nm0 (xT * x): \n");
     printMatrix(m0,colCount,colCount);
-    printf("m1: \n");
+    printf("\nm1 (m0 ^ -1): \n");
     printMatrix(m1,colCount,colCount);
-    printf("m2: \n");
+    printf("\nm2 (m1*xT): \n");
     printMatrix(m2,colCount,rowCount);
-    printf("result: \n");
+    printf("\nresult (m2*y): \n");
     printVector(result,colCount);
 
     // free all of the matrices that we do not need anymore
