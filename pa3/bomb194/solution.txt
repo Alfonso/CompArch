@@ -1,0 +1,18 @@
+phase_1: 574
+
+phase_2: You must be the change you wish to see in the world.
+
+phase_3: She sells 3eashells by the sea shore.
+
+phase_4: 
+
+phase_5:
+
+phase_6:
+
+phase_7:
+
+phase_8:
+
+phase_9:
+
