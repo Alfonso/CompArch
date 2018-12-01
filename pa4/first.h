@@ -5,6 +5,41 @@
 #include<string.h>
 #include<ctype.h>
 
+
+//                  Structs
+
+typedef struct _block{
+    int valid;
+    char* tag;
+    int offset;; // is this right?
+
+} block;
+
+typedef struct _cache{
+    block** blocks;
+    int blockSize;
+    int numSets;
+    int cacheSize;
+    int reads;
+    int writes;
+    int misses;
+    int hits;
+
+} cache;
+
+
+//              Prototype Functions
+
+// creates a cache with the given parameters
+// returns the newly created cache
+cache* createCache(int,int,int);
+
+void writeCache(cache*,char*);
+
+void readCache(cache*,char*);
+
+//              Utility Functions
+
 // returns whether or not the given num is a power of two
 // returns 1 if it is a power of two
 // returns 0 if it is not a power of two
@@ -20,14 +55,13 @@ int powerOfTwo(int num){
 // returns -2 if it is assoc
 // returns n if it is assoc:n
 int setAssoc(char* assoc){
-
+    int counter;
     char* buff = (char*)malloc(sizeof(char)*(1+strlen(assoc))); 
 
     strcpy(buff,assoc);
     
     char* token = strtok(buff,":");
     token = strtok(NULL,":");
-    
     // if token is null, either direct, assoc, or error
     if( token == NULL ){
         if(strcmp(assoc,"direct")==0)
@@ -38,9 +72,23 @@ int setAssoc(char* assoc){
     }
 
     // not null, so return n
-    if(isdigit(token)){
-        return atoi(token);
+    
+    for(counter=0;counter<strlen(token);counter++){
+        if(!isdigit(token[counter]))
+            return -3;
     }
-    return -3;
+
+    return atoi(token);
+}
+
+// prints out the data in the cache
+void printCache(cache c){
+    printf("Memory reads: %d\n",c.reads);
+    printf("Memory writes: %d\n",c.writes);
+    printf("Cache hits: %d\n",c.hits);
+    printf("Cache misses: %d\n",c.misses);
+    
+    return;
+
 }
 
