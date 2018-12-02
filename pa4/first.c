@@ -201,6 +201,16 @@ int prefetch(cache* c, unsigned long long int memory){
             // break?
             wrote = 1;
             // do I increment???
+
+/*
+// DO I NEED TO DO THIS SHIFT FOR PREFETCH?   
+//              APPARENTLY NOT BC I AM OFF IF I DO USE IT         
+            // check to see if it is LRU
+            // if it is, then you have to move the tag that matched to the beginning of the array and shift everything over
+            // call shift function that inputs the hit tag to the 0 index
+            if( c->replacePolicy == 1 )
+                shiftBlocks(c,tag,index);
+*/  
             break;
         }
     }
@@ -227,21 +237,70 @@ int prefetch(cache* c, unsigned long long int memory){
         
         if( c->replacePolicy == 0 ){
             // FIFO
-            // shifting over the values in the array to the right
-            for(counter=c->associativity-1;counter>0;counter--){
-                c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
-            }
-
-            // add new block line to the beginning of the array
-            c->blocks[index][0].tag = tag;
+            fifo(c,tag,index);
             c->reads++;
         }else if (c->replacePolicy == 1){
             // LRU
-
+            lru(c,tag,index);
+            c->reads++;
         }
 
     }
     
+
+    return 1;
+}
+
+int fifo(cache* c,unsigned long long int tag,unsigned long long int index){
+    int counter;
+    // shifting over the values in the array to the right (get rid of the one all the way at the right)
+    for(counter = c->associativity-1;counter>0;counter--)
+        c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
+    // add new block line to the beginning of the array
+    c->blocks[index][0].tag = tag;
+    return 1;
+}
+
+int lru(cache* c,unsigned long long int tag,unsigned long long int index){
+    int counter;
+    
+    // shift everything over right one. just like in fifo
+    // add the new one to the front
+    for(counter = c->associativity-1;counter>0;counter--)
+        c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
+    c->blocks[index][0].tag = tag;
+    // this is because I am going to try to structure the array of blocks
+    // with the ones that have been used more recently being to the beginning of the array
+    // and the ones that have been used least recently to the right
+
+
+    return 1;
+}
+
+// shift all the blocks over and then sets the given tag to the 
+// 0 index
+// have to find the tag where it is in the array
+// and then shift everything over to the right up to that point and then put the
+// given tag to the beginning
+int shiftBlocks(cache* c,unsigned long long int tag,unsigned long long int index){
+    int counter;
+    int oldIndex=0;
+
+    // find what index in the array the tag is in
+
+    for(counter=0;counter<c->associativity;counter++){
+        if( c->blocks[index][counter].tag == tag){
+            oldIndex = counter;
+        }
+    }
+
+    // go from the found index to the beginning shifting
+    // everything over one
+    for(counter=oldIndex;counter>0;counter--){
+        c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
+    }
+
+    c->blocks[index][0].tag = tag;
 
     return 1;
 }
@@ -277,6 +336,13 @@ int readCache(cache* c,unsigned long long int memory){
             // break?
             wrote = 1;
             // do I increment???
+            
+            // check to see if it is LRU
+            // if it is, then you have to move the tag that matched to the beginning of the array and shift everything over
+            // call shift function that inputs the hit tag to the 0 index
+            if( c->replacePolicy == 1 )
+                shiftBlocks(c,tag,index);
+
             c->hits++;
             break;
         }
@@ -312,12 +378,14 @@ int readCache(cache* c,unsigned long long int memory){
         if( c->replacePolicy == 0 ){
             // FIFO
             // shifting over the values in the array to the right
-            for(counter=c->associativity-1;counter>0;counter--){
+       /*     for(counter=c->associativity-1;counter>0;counter--){
                 c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
             }
 
             // add new block line to the beginning of the array
             c->blocks[index][0].tag = tag;
+        */
+            fifo(c,tag,index);
             c->reads++;
             c->misses++;    
             // check if the cache has pre-fetch on
@@ -326,7 +394,11 @@ int readCache(cache* c,unsigned long long int memory){
             }
         }else if (c->replacePolicy == 1){
             // LRU
-
+            lru(c,tag,index);
+            c->reads++;
+            c->misses++;
+            if(c->prefetch == 1)
+                prefetch(c,memory+c->blockSize);
         }
 
     }
@@ -362,6 +434,13 @@ int writeCache(cache* c,unsigned long long int memory){
             // do I increment???
             c->writes++;
             c->hits++;
+            
+            // check to see if it is LRU
+            // if it is, then you have to move the tag that matched to the beginning of the array and shift everything over
+            // call shift function that inputs the hit tag to the 0 index
+            if( c->replacePolicy == 1 )
+                shiftBlocks(c,tag,index);
+
             break;
         }
     }
@@ -394,13 +473,8 @@ int writeCache(cache* c,unsigned long long int memory){
         
         if( c->replacePolicy == 0 ){
             // FIFO
-            // shifting over the values in the array two the right
-            for(counter=c->associativity-1;counter>0;counter--){
-                c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
-            }
-
-            // add new block line to the beginning of the array
-            c->blocks[index][0].tag = tag;
+            fifo(c,tag,index);
+            
             c->reads++;
             c->writes++;
             c->misses++;    
@@ -410,7 +484,12 @@ int writeCache(cache* c,unsigned long long int memory){
             }
         }else if (c->replacePolicy == 1){
             // LRU
-
+            lru(c,tag,index);
+            c->reads++;
+            c->writes++;
+            c->misses++;
+            if( c->prefetch == 1)
+                prefetch(c,memory+c->blockSize);
         }
 
     }

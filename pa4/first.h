@@ -42,6 +42,12 @@ int readCache(cache*,unsigned long long int);
 
 int prefetch(cache*,unsigned long long int);
 
+int fifo(cache*,unsigned long long int,unsigned long long int);
+
+int lru(cache*,unsigned long long int,unsigned long long int);
+
+int shiftBlocks(cache*,unsigned long long int,unsigned long long int);
+
 //              Utility Functions
 
 // returns whether or not the given num is a power of two
