@@ -10,7 +10,7 @@
 
 typedef struct _block{
     int valid;
-    char* tag;
+    unsigned long long int tag;
     int offset;; // is this right?
 
 } block;
@@ -19,11 +19,13 @@ typedef struct _cache{
     block** blocks;
     int blockSize;
     int numSets;
+    int associativity;
     int cacheSize;
     int reads;
     int writes;
     int misses;
     int hits;
+    int replacePolicy;
 
 } cache;
 
@@ -32,11 +34,11 @@ typedef struct _cache{
 
 // creates a cache with the given parameters
 // returns the newly created cache
-cache* createCache(int,int,int);
+cache* createCache(int,int,int,int);
 
-void writeCache(cache*,char*);
+int writeCache(cache*,unsigned long long int);
 
-void readCache(cache*,char*);
+int readCache(cache*,unsigned long long int);
 
 //              Utility Functions
 
@@ -82,11 +84,11 @@ int setAssoc(char* assoc){
 }
 
 // prints out the data in the cache
-void printCache(cache c){
-    printf("Memory reads: %d\n",c.reads);
-    printf("Memory writes: %d\n",c.writes);
-    printf("Cache hits: %d\n",c.hits);
-    printf("Cache misses: %d\n",c.misses);
+void printCache(cache* c){
+    printf("Memory reads: %d\n",c->reads);
+    printf("Memory writes: %d\n",c->writes);
+    printf("Cache hits: %d\n",c->hits);
+    printf("Cache misses: %d\n",c->misses);
     
     return;
 

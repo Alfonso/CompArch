@@ -70,18 +70,22 @@ int main(int argc,char** argv){
     
     char* pc = (char*)malloc(sizeof(char)*500);
     char operation;
-    int address;
+    unsigned long long int address;
 
-    
+    // 0 represents FIFO
+    cache* c = createCache(cacheSize,blockSize,n,0);
 
-
-    while( fscanf(trace,"%s %c %x",pc,&operation,&address) == 3){
-        printf("pc: %s, operation: %c, address: %x\n",pc,operation,address);
-        
+    while( fscanf(trace,"%s %c %llx",pc,&operation,&address) == 3){
+        //printf("pc: %s, operation: %c, address: %llx\n",pc,operation,address);
+        if( operation == 'R' ){
+            readCache(c,address);
+        }
         
 
     }
 
+    
+    printCache(c);
 
     return 1;
 }
@@ -91,13 +95,14 @@ int main(int argc,char** argv){
 // blockSize is the given size of each block
 // n is the associativity( Where it is dirct, assoc, or assoc:n )
 // returns the newly created cache
-cache* createCache(int cacheSize,int blockSize,int n){
+cache* createCache(int cacheSize,int blockSize,int n,int replace){
     cache* c = (cache*)malloc(sizeof(cache));
 
     c->reads = 0;
     c->writes = 0;
     c->misses = 0;
     c->hits = 0;
+    c->replacePolicy = replace;
     
     c->blockSize = blockSize;
     c->cacheSize = cacheSize;
@@ -110,14 +115,17 @@ cache* createCache(int cacheSize,int blockSize,int n){
     if( n == -1 ){
         // since the cache is direct, calculate the number of sets
         c->numSets = cacheSize / ( blockSize * 1 );
+        c->associativity = 1;
     }else if( n == -2 ){
         // since the cache is fully associative, calculate the number of sets
         c->numSets = 1;
         // change the value of n because there has to be a certain amount of blocks
         n = cacheSize / (blockSize * 1);
+        c->associativity = n;
     }else{
         // since the cache is assoc:n calculate the number of sets
         c->numSets = cacheSize / ( blockSize * n );
+        c->associativity = n;
     }
 
     int counter = 0;
@@ -131,7 +139,7 @@ cache* createCache(int cacheSize,int blockSize,int n){
         c->blocks[counter] = (block*)malloc(sizeof(block)*n);
         for(counter2=0;counter2<n;counter2++){
             // initializing the actual block itself
-            c->blocks[counter][counter2].tag = "";
+            c->blocks[counter][counter2].tag = 0;
             c->blocks[counter][counter2].valid = 0;
             c->blocks[counter][counter2].offset = 0;
         }
@@ -143,13 +151,86 @@ cache* createCache(int cacheSize,int blockSize,int n){
     return c;
 }
 
-void readCache(cache* c,char* memory){
+int readCache(cache* c,unsigned long long int memory){
+    // we have to access the memory depending on what
+    // type of cache it is (direct, assoc, assoc:n)
 
-    return;
+    return 1;
 }
 
-void writeCache(cache* c,char* memory){
+int writeCache(cache* c,unsigned long long int memory){
+    // calculate the number of bits needed for the block offset
+    unsigned int blockOffset = log(c->blockSize) / log(2);
+    unsigned int setIndex = log(c->numSets) / log(2);
+    unsigned int index = (memory >> blockOffset) % (0x1 << setIndex);
+    unsigned long long int offset = memory % (0x1 << blockOffset);
+    unsigned long long int tag = memory >> (blockOffset+setIndex);
     
+    int counter=0;
+
+    // go to index in the blocks 2d array and then traverse through all of the blocks in that set and see if there is an open block
+    // if so, just write to it
+    // if not, then find FIFO
+
+    int wrote = 0;
+
+    // check to see if the tag already exists in the cache
+    for(counter = 0;counter<c->associativity;counter++){
+        if(c->blocks[index][counter].tag == tag){
+            // break?
+            wrote = 1;
+            // do I increment???
+            c->writes++;
+            c->hits++;
+            break;
+        }
+    }
+
+    // check to see if there is an open spot if it didnt hit
+    if(wrote == 0){
+        for(counter=0;counter<c->associativity;counter++){
+            if(c->blocks[index][counter].valid == 0){
+                c->blocks[index][counter].valid = 1;
+                c->blocks[index][counter].tag = tag;
+                c->blocks[index][counter].offset = offset;
+                wrote = 1;
+                // do i increment???
+                c->reads++;
+                c->writes++;
+                c->misses++;
+                break;
+            }
+        }
+    }
+
+    // check to see if it put it in because there was an open block
+    // if there was not an open block then we have to do FIFO or LRU
+
+    if(wrote == 0 ){
+        // do FIFO or LRU here
+        
+        if( c->replacePolicy == 0 ){
+            // FIFO
+            // shifting over the values in the array two the right
+            for(counter=c->associativity;counter>0;counter++){
+                c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
+                c->blocks[index][counter].offset = c->blocks[index][counter-1].offset;
+            }
+
+            // add new block line to the beginning of the array
+            c->blocks[index][0].tag = tag;
+            c->blocks[index][0].offset = offset;
+            c->reads++;
+            c->writes++;
+            c->misses++;    
+        }else if (c->replacePolicy == 1){
+            // LRU
+
+        }
+
+    }
+
     
-    return;
+
+    return 1;
 }
