@@ -11,7 +11,6 @@
 typedef struct _block{
     int valid;
     unsigned long long int tag;
-    int offset;; // is this right?
 
 } block;
 
@@ -26,6 +25,7 @@ typedef struct _cache{
     int misses;
     int hits;
     int replacePolicy;
+    int prefetch;
 
 } cache;
 
@@ -34,7 +34,7 @@ typedef struct _cache{
 
 // creates a cache with the given parameters
 // returns the newly created cache
-cache* createCache(int,int,int,int);
+cache* createCache(int,int,int,int,int);
 
 int writeCache(cache*,unsigned long long int);
 
