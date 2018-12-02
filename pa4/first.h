@@ -40,6 +40,8 @@ int writeCache(cache*,unsigned long long int);
 
 int readCache(cache*,unsigned long long int);
 
+int prefetch(cache*,unsigned long long int);
+
 //              Utility Functions
 
 // returns whether or not the given num is a power of two

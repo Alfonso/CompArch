@@ -99,10 +99,10 @@ int main(int argc,char** argv){
         
         if( operation == 'R' ){
             readCache(c,address);
-            readCache(prec,address);
+            //readCache(prec,address);
         }else if( operation == 'W' ){
             writeCache(c,address);
-            writeCache(prec,address);
+            //writeCache(prec,address);
         }
         
 
@@ -176,6 +176,74 @@ cache* createCache(int cacheSize,int blockSize,int n,int replace,int pre){
     return c;
 }
 
+// do pre-fetching here
+// the memory parameter is the new memory address
+// old address + blockSize 
+int prefetch(cache* c, unsigned long long int memory){
+
+    int wrote = 0;
+    int counter= 0;
+    unsigned long long int blockOffset = log(c->blockSize) / log(2);
+    unsigned long long int setIndex = log(c->numSets) / log(2);
+    unsigned long long int index = (memory >> blockOffset) % (0x1 << setIndex);
+    unsigned long long int tag = memory >> (blockOffset + setIndex);
+    if(c->numSets == 1)
+        index = 0;
+
+    // check to see if the tag already exists in the cache
+    for(counter = 0;counter<c->associativity;counter++){
+        if(c->blocks[index][counter].tag == tag){
+            // break?
+            wrote = 1;
+            // do I increment???
+            c->hits++;
+            break;
+        }
+    }
+
+    // check to see if there is an open spot if it didnt hit
+    if(wrote == 0){
+        for(counter=c->associativity-1;counter>=0;counter--){
+            if(c->blocks[index][counter].valid == 0){
+                c->blocks[index][counter].valid = 1;
+                c->blocks[index][counter].tag = tag;
+                wrote = 1;
+                // do i increment???
+                c->reads++;
+                c->misses++;
+                break;
+            }
+        }
+    }
+
+    // check to see if it put it in because there was an open block
+    // if there was not an open block then we have to do FIFO or LRU
+
+    if(wrote == 0 ){
+        // do FIFO or LRU here
+        
+        if( c->replacePolicy == 0 ){
+            // FIFO
+            // shifting over the values in the array to the right
+            for(counter=c->associativity-1;counter>0;counter--){
+                c->blocks[index][counter].tag = c->blocks[index][counter-1].tag;
+            }
+
+            // add new block line to the beginning of the array
+            c->blocks[index][0].tag = tag;
+            c->reads++;
+            c->misses++;    
+        }else if (c->replacePolicy == 1){
+            // LRU
+
+        }
+
+    }
+    
+
+    return 1;
+}
+
 int readCache(cache* c,unsigned long long int memory){
     // calculate the number of bits needed for the block offset
     unsigned long long int blockOffset = log(c->blockSize) / log(2);
@@ -222,29 +290,6 @@ int readCache(cache* c,unsigned long long int memory){
                 // do i increment???
                 c->reads++;
                 c->misses++;
-                // pre-fetching part
-                if( c->prefetch == 1 ){
-                    // have to check if the address of the next block is in the cache
-                    int fwrote =0;
-                    int fcounter = 0;
-                    unsigned long long int fmemory = memory+c->blockSize;
-                    unsigned long long int findex = (fmemory >> blockOffset) % (0x1 << setIndex);
-                    if( c->numSets == 1 )
-                        findex = 0;
-                    unsigned long long int ftag = memory >> (blockOffset+setIndex);
-                
-                    // check to see if it matches here
-                    for(fcounter=0;fcounter<c->associativity;fcounter++){
-                        if(c->blocks[findex][fcounter].tag == ftag){
-                            fwrote = 1;
-                            break;
-                        }
-                    }
-                    // if fwrote == 0 then that means the pre-fetch missed
-                    if(fwrote == 0)
-                        c->reads++;
-                }
-
                 break;
             }
         }
@@ -267,29 +312,6 @@ int readCache(cache* c,unsigned long long int memory){
             c->blocks[index][0].tag = tag;
             c->reads++;
             c->misses++;    
-                // pre-fetching part
-                if( c->prefetch == 1 ){
-                    // have to check if the address of the next block is in the cache
-                    int fwrote =0;
-                    int fcounter = 0;
-                    unsigned long long int fmemory = memory+c->blockSize;
-                    unsigned long long int findex = (fmemory >> blockOffset) % (0x1 << setIndex);
-                    if( c->numSets == 1 )
-                        findex = 0;
-                    unsigned long long int ftag = memory >> (blockOffset+setIndex);
-                
-                    // check to see if it matches here
-                    for(fcounter=0;fcounter<c->associativity;fcounter++){
-                        if(c->blocks[findex][fcounter].tag == ftag){
-                            fwrote = 1;
-                            break;
-                        }
-                    }
-                    // if fwrote == 0 then that means the pre-fetch missed
-                    if(fwrote == 0)
-                        c->reads++;
-                }
-
         }else if (c->replacePolicy == 1){
             // LRU
 
@@ -343,29 +365,6 @@ int writeCache(cache* c,unsigned long long int memory){
                 c->reads++;
                 c->writes++;
                 c->misses++;
-                // pre-fetching part
-                if( c->prefetch == 1 ){
-                    // have to check if the address of the next block is in the cache
-                    int fwrote =0;
-                    int fcounter = 0;
-                    unsigned long long int fmemory = memory+c->blockSize;
-                    unsigned long long int findex = (fmemory >> blockOffset) % (0x1 << setIndex);
-                    if( c->numSets == 1 )
-                        findex = 0;
-                    unsigned long long int ftag = memory >> (blockOffset+setIndex);
-                
-                    // check to see if it matches here
-                    for(fcounter=0;fcounter<c->associativity;fcounter++){
-                        if(c->blocks[findex][fcounter].tag == ftag){
-                            fwrote = 1;
-                            break;
-                        }
-                    }
-                    // if fwrote == 0 then that means the pre-fetch missed
-                    if(fwrote == 0)
-                        c->reads++;
-                }
-
                 break;
             }
         }
@@ -389,37 +388,12 @@ int writeCache(cache* c,unsigned long long int memory){
             c->reads++;
             c->writes++;
             c->misses++;    
-                // pre-fetching part
-                if( c->prefetch == 1 ){
-                    // have to check if the address of the next block is in the cache
-                    int fwrote =0;
-                    int fcounter = 0;
-                    unsigned long long int fmemory = memory+c->blockSize;
-                    unsigned long long int findex = (fmemory >> blockOffset) % (0x1 << setIndex);
-                    if( c->numSets == 1 )
-                        findex = 0;
-                    unsigned long long int ftag = memory >> (blockOffset+setIndex);
-                
-                    // check to see if it matches here
-                    for(fcounter=0;fcounter<c->associativity;fcounter++){
-                        if(c->blocks[findex][fcounter].tag == ftag){
-                            fwrote = 1;
-                            break;
-                        }
-                    }
-                    // if fwrote == 0 then that means the pre-fetch missed
-                    if(fwrote == 0)
-                        c->reads++;
-                }
-
         }else if (c->replacePolicy == 1){
             // LRU
 
         }
 
     }
-
-    
 
     return 1;
 }
