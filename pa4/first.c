@@ -121,7 +121,7 @@ int main(int argc,char** argv){
     freeCache(prec);
     fclose(trace);
 
-    return 1;
+    return 0;
 }
 
 
