@@ -1,0 +1,68 @@
+Alfonso Buono
+Computer Architecture Fall 2018
+Professor Santosh Nagarakatte
+TA Jay P Lim
+Project 4: Cache Simulator
+
+Extra Credit:
+    I attempted the extra credit and comparing the outputs from my program to the outputs provided in the autograder
+    it appears as though I implemented LRU correctly
+
+    I did this by slightly changing how tags are updated in a set. Originally with FIFO I would check to see if there
+    are any open lines/blocks in the set that we are traversing. If there are open slots then I would add the tag to
+    the right most empty/open slot in the array. This was done because it was to setup the FIFO mechanic as the first
+    in block (the first one added in this set) would be found all the way to the right of the array. So, when FIFO was
+    needed to be called because there were no more empty slots in the set, my FIFO method shifts all of the block info
+    to the right of the current slot in the index. Thus, the rightmost block in the array will get deleted and the first
+    block is then given the tag that I was adding. My method for LRU is very similar to FIFO but I alter one small piece.
+    If the cache is using LRU then whenever there is a hit (whether it be a write or read) the tag that was hit is moved
+    all the way to the left of the array (this was done because I would denote that the left side of the array are the
+    more recently used while the right side of the array are the least recently used). I would then also shift down all
+    of the blocks one to the right until it got to the original location of the tag that was hit. This new ordering system
+    makes the replacement super simple as now I just do what I did in FIFO. Whenever I need to replace a tag with a new one
+    I shift over all of the blocks one to the right and put the new tag in the leftmost slot. This is because the blocks
+    are ordered from most recently used to least recently used so the last block in the array is the Least Recently Used.
+    
+Data Structures:
+    The two structs that I created in my program are blocks and a cache: 
+    The blocks are the "lines" that were discussed in class that contain the tag, the offset, and the valid bit. 
+    
+    The cache struct contains a lot of data and "settings" such as cache size, block size, if it incorporates 
+    pre-fetching, if it is FIFO or LRU, if it is direct, fully associative or assoc:n. Furthermore, the cache 
+    also contains a 2D array of blocks. This 2D array is the "cache" as it stores all of the tags and is what
+    I perform all of the operations on.
+
+    The 2D array of blocks is essentially the "cache" as it contains all of the sets and all of the blocks. In this
+    array, the number of block arrays is equivalent to the number of sets and the number of blocks in each of those
+    arrays is the associativity. Thus, we can easily traverse the 2D array in order to input the tags/address and 
+    check for misses and hits. Furthermore, implementing FIFO and LRU (as described above) was also easy as it is
+    just manipulating where you put the new blocks and how you shift around existing blocks.
+
+Reading and Writing:
+    Both the reading and writing cache functions are essentially identical except for what metadata is changed. They
+    both first calculate the number of bits required in the offset, the number of bits required in the index and then
+    the number of bits required in the tag. This was done by using the equation/information given in class which is
+    the logbase 2 of the blockSize (for the number of bits for the offset) as well as logbase 2 of the number of sets
+    (for the number of bits in the index). The number of bits required for the tag are just the number left over after
+    "taking/using" the amount for both the index and offset. After these are calculated we find the index and tag by using
+    bit shifts and modulus. Once the data is found we then traverse the 2D array of blocks / Cache and go to the index that
+    we calculated. After this is done we then traverse through the blocks in the index and see if there is a hit with the tag
+    we calcualted. If there is then depending on if it is a R or W operation certain metadata (writes, reads, hits) increases. 
+    If there is no hit then we check to see if there is an empty block in the set. If there is, it is written to that empty block
+    and then the metadata is also updated. If there are no empty blocks then one of the replacement strategies is used (LRU or FIFO).
+    After this replacement strategy is used, the metadata again updates. So, the only differences between the Read and Write
+    Operations are what metadata increments as the base functionality is the same.
+
+Pre-Fetch:
+    When comparing the metadata from a cache that does not use pre-fetching to the metadata from a cache that does use
+    pre-fetching one can see there are differences in the number of cache hits and number of memory reads. Pre-Fetching
+    increases the number of memory reads and cache hits. This is because pre-fetching attempts to bring in the tag/address
+    that could potentially be looked at in the future. It is only called if there is a miss on an address because we do not
+    want to have another miss in the future and by pre-fetching the address of the address + block size, we can potentially
+    lower the miss rate as the address we are pre-fetching is most likely going to be looked at. However, we also increase
+    the number of memory reads as if the address that we are pre-fetching is not found in the cache we have to read it from
+    memory. This is very likely as if the previous address was not found in the cache, we know this because pre-fetching
+    only occurs on a miss, then the address we are pre-fetching has a high chance of not being the cache (as the address are
+    so close to each other).
+
+
