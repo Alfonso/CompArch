@@ -116,6 +116,11 @@ int main(int argc,char** argv){
     printf("with-prefetch\n");
     printCache(prec);    
 
+    // free dem caches
+    freeCache(c);
+    freeCache(prec);
+    fclose(trace);
+
     return 1;
 }
 
@@ -179,6 +184,18 @@ cache* createCache(int cacheSize,int blockSize,int n,int replace,int pre){
 
         
     return c;
+}
+
+void freeCache(cache* c){
+    int counter;
+    for(counter=0;counter< c->numSets;counter++){
+            free(c->blocks[counter]);
+    }
+
+    free(c->blocks);
+    free(c);
+
+    return;
 }
 
 // do pre-fetching here

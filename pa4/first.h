@@ -48,6 +48,8 @@ int lru(cache*,unsigned long long int,unsigned long long int);
 
 int shiftBlocks(cache*,unsigned long long int,unsigned long long int);
 
+void freeCache(cache*);
+
 //              Utility Functions
 
 // returns whether or not the given num is a power of two
